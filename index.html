@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DataTable from Google Sheets</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.1.9/css/fixedHeader.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css">
+	
+	<link rel="stylesheet" href="style.css">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedheader/3.1.9/js/dataTables.fixedHeader.min.js"></script>
+    <script src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
+	
+	<script src="credentials.js"></script>
+	<script src="script.js"></script>
+</head>
+<body>
+	<!--<div id="toggleLinksContainer">Toggle column: </div>-->
+	<div id="currentSheet"></div>
+    <table id="example" class="display compact order-column hover cell-border" style="width:100%">
+        <thead>
+            <tr id="table-header">
+                <!-- Headers will be added dynamically -->
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+		<tfoot>
+		        <tr id="table-footer"></tr>
+		    </tfoot>
+    </table>
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Create label</h3>
+            <div id="customCheckboxes">
+                <!-- Checkboxes will be added dynamically -->
+            </div>
+            <div id="label">
+                <div id="customContent">
+                <!-- Content will be added dynamically -->
+                </div>
+                <textarea class="customNotes" placeholder="Add notes here..." rows="4"></textarea>
+            </div>
+            <button id="printButton">Print</button>
+        </div>
+    </div>
+</body>
+</html>
