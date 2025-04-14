@@ -47,7 +47,7 @@ $(document).ready(function () {
                     });
                 }
 
-                const tableBody = $('#example tbody');
+                const tableBody = $('#mainTable tbody');
                 tableBody.empty();
 
                 rows.forEach(row => {
@@ -68,7 +68,7 @@ $(document).ready(function () {
                     return null;
                 }).filter(def => def !== null);
 
-                const table = $('#example').DataTable({
+                const table = $('#mainTable').DataTable({
                     "order": [
                         [0, "desc"], // First column in descending order
                         [1, "desc"] // Second column in descending order
@@ -95,9 +95,11 @@ $(document).ready(function () {
                             text: 'Sputter / Quantum',
                             attr: { id: 'toggleChamberButton' },
                             action: function (e, dt, node, config) {
-                                table.destroy();
-                                currentSheet = (currentSheet === range) ? rangeQuantum : range;
-                                fetchDataAndInitializeTable(currentSheet);
+                                $('#mainTable').fadeOut(400, function () {
+                                    table.destroy();
+                                    currentSheet = (currentSheet === range) ? rangeQuantum : range;
+                                    fetchDataAndInitializeTable(currentSheet);
+                                });
                             }
                         }
                     ],
@@ -164,10 +166,13 @@ $(document).ready(function () {
                             if (columnName === "Substrate name") {
                                 if (!addedSubstrateNames.has(columnValue)) {
                                     addedSubstrateNames.add(columnValue);
-                                    content += `<p><b><u>${columnName}:</u> </b> ${columnValue}</p>`;
+                                    content += `<p><b>${columnName}:</b> ${columnValue}</p>`;
                                     hasContent = true;
                                     substrateNameAdded = true;
                                 }
+                            } else if (columnName === "Date" && substrateNameAdded) {
+                                content += `<p><b>${columnName}:</b> ${columnValue}</p>`;
+                                hasContent = true;
                             } else if (columnValue && columnValue.trim() !== "") {
                                 content += `<p><b>${columnName}:</b> ${columnValue}</p>`;
                                 hasContent = true;
@@ -270,6 +275,9 @@ $(document).ready(function () {
                         column.visible(!column.visible());
                     });
                 });
+
+                // Fade in the table after it has been populated
+                $('#mainTable').fadeIn(400);
             })
             .catch(error => console.error('Error fetching data:', error));
     }

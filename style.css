@@ -1,10 +1,10 @@
 /* Ensure table cells do not wrap */
-#example tbody td {
+#mainTable tbody td {
     white-space: nowrap;
 }
 
 /* Ensure table headers do wrap */
-#example thead th {
+#mainTable thead th {
     white-space: normal;
 }
 
@@ -97,7 +97,7 @@
 	margin-top:10px;
 	padding: 5px 10px 5px 10px;
 }
-.dataTables_length, #example_filter {
+.dataTables_length, #mainTable_filter {
 	margin: 5px;
 }
 
