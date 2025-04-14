@@ -10,6 +10,9 @@
       font-family: sans-serif;
       padding: 1rem;
     }
+	div {
+		margin: 10px;
+	}
     #chart-container {
       width: 100%;
       height: 700px;
@@ -27,20 +30,26 @@
   </style>
 </head>
 <body>
+<div id="title">
+	<h2>Log viewer</h2>
+</div>
+<div id = "controls">
+	<input type="file" id="csvFile" accept=".csv">
+	<button id="addY">Add Y</button>
+	<button onclick="resetZoom()">Reset zoom</button>
+</div>
 
-<h2>CSV Plotter</h2>
-<input type="file" id="csvFile" accept=".csv">
-  <button id="addY">Add Y Axis</button>
-  <button onclick="resetZoom()">Reset Zoom</button>
-<div>
-  <label>X Axis:
-    <select id="xSelect"></select>
-  </label>
-  <label>Y Axis:
-    <select class="ySelect"></select>
-  </label>
-  <div id="addHere"><div>
-  
+<div id ='dropdowns'>
+	<div>
+	  <label>X:
+	    <select id="xSelect"></select>
+	  </label>
+	</div>
+	<div id = 'yaxes'>
+	  <label>Y:
+	    <select class="ySelect"></select>
+	  </label>
+	</div>  
 </div>
 
 <div id="chart-container">
@@ -58,8 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Check URL for ?file=...
   const params = new URLSearchParams(window.location.search);
   const fileUrl = params.get("file");
-
+ 
   if (fileUrl) {
+	  document.getElementById("title").append('File: '+fileUrl);
     fetch(fileUrl)
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch file");
@@ -87,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const option = new Option(header, header);
       ySelect.add(option);
     });
-    document.querySelector("div").insertBefore(ySelect, document.getElementById("addHere"));
+    document.getElementById("yaxes").append(ySelect);
   });
 });
 
@@ -168,7 +178,7 @@ function drawChart(labels, datasets) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
+        interaction: { mode: 'index', intersect: true },
         plugins: {
           legend: { position: 'top' },
           zoom: {
