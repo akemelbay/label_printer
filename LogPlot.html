@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CSV Plotter</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+    }
+    #chart-container {
+      width: 100%;
+      height: 700px;
+      position: relative;
+      margin-top: 20px;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    select {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>CSV Plotter</h2>
+<input type="file" id="csvFile" accept=".csv">
+  <button id="addY">Add Y Axis</button>
+  <button onclick="resetZoom()">Reset Zoom</button>
+<div>
+  <label>X Axis:
+    <select id="xSelect"></select>
+  </label>
+  <label>Y Axis:
+    <select class="ySelect"></select>
+  </label>
+  <div id="addHere"><div>
+  
+</div>
+
+<div id="chart-container">
+  <canvas id="chart"></canvas>
+</div>
+
+<script>
+let chart = null;
+let csvHeaders = [];
+let csvData = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  const fileInput = document.getElementById("csvFile");
+
+  // Check URL for ?file=...
+  const params = new URLSearchParams(window.location.search);
+  const fileUrl = params.get("file");
+
+  if (fileUrl) {
+    fetch(fileUrl)
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch file");
+        return res.text();
+      })
+      .then(text => handleCSV(text))
+      .catch(err => alert("Error loading CSV: " + err.message));
+  }
+
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => handleCSV(e.target.result);
+    reader.readAsText(file);
+  });
+
+  document.getElementById("xSelect").addEventListener("change", updateChart);
+  document.getElementById("addY").addEventListener("click", () => {
+    const ySelect = document.createElement("select");
+    ySelect.className = "ySelect";
+    ySelect.addEventListener("change", updateChart);
+    csvHeaders.forEach(header => {
+      const option = new Option(header, header);
+      ySelect.add(option);
+    });
+    document.querySelector("div").insertBefore(ySelect, document.getElementById("addHere"));
+  });
+});
+
+function handleCSV(text) {
+  const rows = text.trim().split("\n").map(row => row.split(","));
+  csvHeaders = rows[0];
+  csvData = rows.slice(1);
+
+  // Populate X axis dropdown
+  const xSelect = document.getElementById("xSelect");
+  xSelect.innerHTML = "";
+  csvHeaders.forEach(header => {
+    const option = new Option(header, header);
+    xSelect.add(option);
+  });
+  
+ // Default selection to "Elapsed time"
+  const elapsedTimeIndex = csvHeaders.indexOf(" Elapsed Time");
+  if (elapsedTimeIndex !== -1) {
+    xSelect.selectedIndex = elapsedTimeIndex;
+  }
+
+  // Populate initial Y axis dropdown
+  const ySelect = document.querySelector(".ySelect");
+  ySelect.innerHTML = "";
+  csvHeaders.forEach(header => {
+    const option = new Option(header, header);
+    ySelect.add(option);
+  });
+
+  // Add change listeners
+  document.getElementById("xSelect").addEventListener("change", updateChart);
+  document.querySelector(".ySelect").addEventListener("change", updateChart);
+
+  // Select first column as default X, second as default Y (if possible)
+  document.getElementById("xSelect").selectedIndex = elapsedTimeIndex;
+  document.querySelector(".ySelect").selectedIndex = csvHeaders.length > 1 ? 1 : 0;
+
+  // Trigger chart creation after default selections
+  updateChart();
+}
+
+function updateChart() {
+  const xCol = document.getElementById("xSelect").value;
+  const yCols = Array.from(document.querySelectorAll(".ySelect")).map(sel => sel.value).filter(v => v && v !== xCol);
+
+  if (!xCol || yCols.length === 0) return;
+
+  const xIndex = csvHeaders.indexOf(xCol);
+  const yIndexes = yCols.map(col => csvHeaders.indexOf(col));
+  const labels = csvData.map(row => row[xIndex]);
+
+  const colors = [
+    "#ff6384", "#36a2eb", "#cc65fe", "#ffce56", "#4bc0c0", "#9966ff", "#e7e9ed"
+  ];
+
+  const datasets = yIndexes.map((yIdx, i) => {
+    const color = colors[i % colors.length];
+    return {
+      label: csvHeaders[yIdx],
+      data: csvData.map(row => parseFloat(row[yIdx])),
+      borderColor: color,
+      backgroundColor: color,
+      yAxisID: `y${i}`,
+      tension: 0.1
+    };
+  });
+
+  drawChart(labels, datasets);
+}
+
+function drawChart(labels, datasets) {
+  if (!chart) {
+    const ctx = document.getElementById("chart").getContext("2d");
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top' },
+          zoom: {
+            zoom: {
+              wheel: { enabled: true },
+              pinch: { enabled: true },
+              mode: 'xy',
+            },
+            pan: {
+              enabled: true,
+              mode: 'xy',
+            }
+          }
+        },
+        scales: {}
+      }
+    });
+  }
+
+  const yAxes = datasets.map((ds, i) => ({
+    id: `y${i}`,
+    position: i % 2 === 0 ? "left" : "right",
+    title: {
+      display: true,
+      text: ds.label,
+      color: ds.borderColor
+    },
+    ticks: { color: ds.borderColor },
+    grid: { drawOnChartArea: i === 0 },
+    border: { color: ds.borderColor }
+  }));
+
+  chart.data.labels = labels;
+  chart.data.datasets = datasets;
+
+  chart.options.scales = {
+    x: {
+      display: true,
+      title: { display: true, text: 'X Axis' }
+    },
+    ...Object.fromEntries(yAxes.map(axis => [axis.id, axis]))
+  };
+
+  chart.update();
+}
+
+function resetZoom() {
+  if (chart) chart.resetZoom();
+}
+</script>
+
+</body>
+</html>
