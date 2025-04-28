@@ -135,7 +135,7 @@ $(document).ready(function () {
                 // Add checkboxes for each column in the "Custom" tab
                 $('#customCheckboxes').empty();
                 headers.forEach((header, index) => {
-                    const isChecked = ['Date', 'Substrate name', 'Material name', 'Substrate T, C', 'DC Power max, %', 'Calibrated Rate, A/s'].includes(header) ? 'checked' : '';
+                    const isChecked = ['Date', 'Substrate name', 'Material name', 'Substrate T, C', 'DC Power max, %', 'Calibrated Rate, A/s', 'Thickness, nm'].includes(header) ? 'checked' : '';
                     $('#customCheckboxes').append(`
                         <div>
                             <input type="checkbox" id="checkbox${index}" name="checkbox${index}" value="${header}" ${isChecked}>
