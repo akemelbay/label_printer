@@ -3,6 +3,7 @@ $(document).ready(function () {
     const rangeQuantum = `${SHEET_NAME_QUANTUM}!A1:Z`; // Adjust the range as needed
 
     let currentSheet = range; // Variable to keep track of the current sheet
+	let selectedRowOrder = [];
 
     function fetchDataAndInitializeTable(sheetRange) {
         fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${sheetRange}?key=${API_KEY}`)
@@ -227,6 +228,8 @@ $(document).ready(function () {
                     });
                     // Remove border before printing
                     $('#label').css('border', 'none')
+					$("#customContent .process").last().css("border", "none");
+					
 
                     function printLabel() {
                         const labelContent = document.querySelector("#label").innerHTML;
@@ -250,6 +253,8 @@ $(document).ready(function () {
                                 element.style.display = 'block';
                                 // Show border again
                                 document.querySelector('#label').style.border = '2px solid black';
+								$("#customContent .process").last().css("border-bottom", "1px dashed black");
+								
                             }
                         });
                     }
@@ -281,6 +286,171 @@ $(document).ready(function () {
             })
             .catch(error => console.error('Error fetching data:', error));
     }
+	
+	function getFilenameFromLabel() {
+	    let filename = "label"; // fallback default
+	    const substrateText = $("#label p:contains('Substrate name:')").first().text();
+	    // Example: "Substrate name: Chamber: 20250813_MS-83_NbN_475V_600C_75nm"
+
+	    const match = substrateText.match(/Substrate name:\s*(.+)$/);
+	    if (match && match[1]) {
+	        filename = match[1].trim().replace(/:/g, " -");
+	    }
+	    return filename;
+	}
+	
+	// Save Image button functionality
+	$('#saveImageButton').on('click', function () {
+	    const labelElement = document.querySelector("#label");
+		
+		
+	    // Replace textareas with divs for notes
+	    $('#label .customNotes').each(function () {
+	        if ($(this).val().trim() !== '') {
+	            const text = $(this).val();
+	            let addNoteLabel = '';
+	            if (selectedRowOrder.length > 0) {
+	                addNoteLabel = '<b>Note:</b> ';
+	            }
+	            const div = $('<div>').html(addNoteLabel + text).css({
+	                'white-space': 'pre-wrap',
+	                'overflow': 'hidden',
+	                'border': 'none',
+	                'padding': '0',
+	                'font-family': 'Times New Roman, serif',
+	                'font-size': '12px',
+	                'width': $(this).width(),
+	            });
+	            $(this).after(div).hide();
+	        } else {
+	            $(this).css('display', 'none');
+	        }
+	    });
+
+	    // Remove border for clean image
+	    //const originalBorder = $('#label').css('border');
+	    //$('#label').css('border', 'none');
+		$("#customContent .process").last().css("border", "none");
+
+	    // Wait for DOM update before capturing
+	    setTimeout(() => {
+	        html2canvas(labelElement, { scale: 3, backgroundColor: "#ffffff" })
+	            .then(canvas => {
+	                // Convert to PNG
+	                const imageData = canvas.toDataURL("image/png");
+
+	                // Trigger download
+	                const link = document.createElement("a");
+	                link.href = imageData;
+					link.download = getFilenameFromLabel() + ".png";
+	                document.body.appendChild(link);
+	                link.click();
+	                document.body.removeChild(link);
+	            })
+	            .catch(error => {
+	                console.error("Error saving image:", error);
+	            })
+	            .finally(() => {
+	                // Restore original UI
+	                document.querySelectorAll('#label .customNotes').forEach(function (element) {
+	                    if (element.nextElementSibling) {
+	                        element.nextElementSibling.remove();
+	                        element.style.display = 'block';
+	                    } else {
+	                        element.style.display = 'block';
+	                    }
+	                });
+	                //$('#label').css('border', originalBorder);
+	            });
+	    }, 50); // Small delay to ensure DOM is updated
+	});
+	
+	//Toast for label copy notification
+	function showToast(message) {
+	    const toast = $('<div>')
+	        .text(message)
+	        .css({
+	            position: 'fixed',
+	            top: '20px',
+	            right: '20px',
+	            background: '#333',
+	            color: '#fff',
+	            padding: '10px 15px',
+	            borderRadius: '6px',
+	            fontSize: '20px',
+	            zIndex: 9999,
+	            opacity: 0
+	        })
+	        .appendTo('body');
+
+	    toast.animate({ opacity: 1 }, 300, function () {
+	        setTimeout(function () {
+	            toast.fadeOut(800, function () { $(this).remove(); });
+	        }, 2000);
+	    });
+	}
+	
+	
+	// Copy Image button functionality
+	$('#copyImageButton').on('click', function () {
+	    const labelElement = document.querySelector("#label");
+
+	    // Replace textareas with divs for notes
+	    $('#label .customNotes').each(function () {
+	        if ($(this).val().trim() !== '') {
+	            const text = $(this).val();
+	            let addNoteLabel = '';
+	            if (selectedRowOrder.length > 0) {
+	                addNoteLabel = '<b>Note:</b> ';
+	            }
+	            const div = $('<div>').html(addNoteLabel + text).css({
+	                'white-space': 'pre-wrap',
+	                'overflow': 'hidden',
+	                'border': 'none',
+	                'padding': '0',
+	                'font-family': 'Times New Roman, serif',
+	                'font-size': '12px',
+	                'width': $(this).width(),
+	            });
+	            $(this).after(div).hide();
+	        } else {
+	            $(this).css('display', 'none');
+	        }
+	    });
+		
+		$("#customContent .process").last().css("border", "none");
+		
+	    setTimeout(() => {
+	        html2canvas(labelElement, { scale: 3, backgroundColor: "#ffffff" })
+	            .then(canvas => {
+	                canvas.toBlob(blob => {
+	                    if (!blob) return;
+	                    const item = new ClipboardItem({ "image/png": blob });
+						const filename = getFilenameFromLabel();
+						navigator.clipboard.write([item])
+						    .then(() => {
+								showToast(`Label for "${filename}" copied to clipboard.`);
+						    })
+	                        .catch(err => {
+	                            console.error("Error copying image:", err);
+	                            alert("Failed to copy image to clipboard.");
+	                        });
+	                });
+	            })
+	            .finally(() => {
+	                // Restore original UI
+	                document.querySelectorAll('#label .customNotes').forEach(function (element) {
+	                    if (element.nextElementSibling) {
+	                        element.nextElementSibling.remove();
+	                        element.style.display = 'block';
+	                    } else {
+	                        element.style.display = 'block';
+	                    }
+	                });
+	            });
+	    }, 50);
+	});
+	
 
     // Initialize the table with the default sheet
     fetchDataAndInitializeTable(range);

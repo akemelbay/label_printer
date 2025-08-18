@@ -93,7 +93,7 @@
     font-size:12px;
     field-sizing: content;
 }
-#printButton {
+#myModal button{
 	margin-top:10px;
 	padding: 5px 10px 5px 10px;
 }
